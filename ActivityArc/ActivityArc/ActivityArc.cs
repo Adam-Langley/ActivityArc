@@ -138,7 +138,12 @@ namespace ActivityArc
             _rotationAnimation.Cumulative = true;
             _rotationAnimation.FillMode = CAFillMode.Forwards;
             _rotationAnimation.TimingFunction = CAMediaTimingFunction.FromName(CAMediaTimingFunction.Linear);
+            // We don't want to remove the animation when completed, because that would cause the arc to snap back
+            // to its original rotation value.
             _rotationAnimation.RemovedOnCompletion = false;
+            // We're not going to automatically repeat, because we want the opportunity to modify the transform
+            // on its final spin. Animations cannot be altered once they have been started.
+            _rotationAnimation.RepeatCount = 0;
         }
 
         private void SetupColorAnimation()
@@ -193,36 +198,54 @@ namespace ActivityArc
 
             _strokeAnimation.AnimationStopped += (x, y) =>
             {
-                var presentationLayer = _ringLayer.PresentationLayer as CAShapeLayer ?? _ringLayer;
-
-                SetupStrokeAnimation();
-
-                if (IsIndeterminate)
+                if (_strokeAnimation.RemovedOnCompletion)
                 {
-                    _ringLayer.AddAnimation(_strokeAnimation, ANIMATION_NAME_STROKE);
+                    // Disable animation because the CALayer will attempt to animate
+                    // the stroke from the PREVIOUS StrokeEnd value (not the currently animated value).
+                    CATransaction.DisableActions = true;
+                    _ringLayer.StrokeEnd = this.ProgressValue;
+                    CATransaction.DisableActions = false;
                 }
-                else if (null != _ringLayer.AnimationForKey(ANIMATION_NAME_STROKE))
+                else
                 {
-                    _strokeAnimation.To = NSNumber.FromNFloat(this.ProgressValue);
-                    _strokeAnimation.Duration = _rotationAnimation.Duration * 1.5f;
-                    _strokeAnimation.RemovedOnCompletion = true;
-                    _ringLayer.AddAnimation(_strokeAnimation, ANIMATION_NAME_STROKE);
+                    // Reinitialize animation parameters
+                    SetupStrokeAnimation();
+
+                    if (IsIndeterminate)
+                    {
+                        _ringLayer.AddAnimation(_strokeAnimation, ANIMATION_NAME_STROKE);
+                    }
+                    else if (null != _ringLayer.AnimationForKey(ANIMATION_NAME_STROKE))
+                    {
+                        // If the animation is currently running, let's phase it out.
+                        // Ending at the current 'Progress Value'. 
+                        _strokeAnimation.To = NSNumber.FromNFloat(this.ProgressValue);
+                        _strokeAnimation.Duration = _rotationAnimation.Duration * 1.5f;
+                        // ...then have it removed so it no longer recurs.
+                        _strokeAnimation.RemovedOnCompletion = true;
+                        // Queue it up for one final animation...
+                        _ringLayer.AddAnimation(_strokeAnimation, ANIMATION_NAME_STROKE);
+                    }
                 }
             };
 
             _rotationAnimation.AnimationStopped += (x, y) =>
             {
+                // Reinitialize any animation settings.
                 SetupRotationAnimation();
 
                 if (IsIndeterminate)
                 {
-                    SetupRotationAnimation();
+                    // Re-queue the animation to keep the loo going.
                     _ringLayer.AddAnimation(_rotationAnimation, ANIMATION_NAME_ROTATION);
                 }
                 else if (null != _ringLayer.AnimationForKey(ANIMATION_NAME_ROTATION))
                 {
+                    // The rotation animation needs to be stopped, we we'll ease it out...
                     _rotationAnimation.TimingFunction = CAMediaTimingFunction.FromName(CAMediaTimingFunction.EaseOut);
+                    // ...then have it removed so it no longer recurs.
                     _rotationAnimation.RemovedOnCompletion = true;
+                    // Queue it up for one final rotation...
                     _ringLayer.AddAnimation(_rotationAnimation, ANIMATION_NAME_ROTATION);
                 }
             };
@@ -254,9 +277,7 @@ namespace ActivityArc
             var path = new UIBezierPath();
             path.AddArc(new CGPoint(Bounds.Width / 2, Bounds.Height / 2), minimumPlane / 2, 1.5f * (float)Math.PI, 3.5f * (float)Math.PI, true);
 
-            _ringLayer.Path = path.CGPath;
-
-            _shadowLayer.Path = path.CGPath;
+            _ringLayer.Path = path.CGPath = path.CGPath;
 
             UpdateLayers();
         }
@@ -305,7 +326,11 @@ namespace ActivityArc
             {
                 HideZeroPercent = true;
                 _textLayer.Hidden = HideZeroPercent && _progressValue == 0;
-                _ringLayer.StrokeEnd = ProgressValue;
+
+                // Don't force a change in the stroke if it's currently being animated.
+                // It will get set to the correct value when the animation completes anyway.
+                if (null == _ringLayer.AnimationForKey(ANIMATION_NAME_STROKE))
+                    _ringLayer.StrokeEnd = ProgressValue;
 
                 if (null == _shadowLayer.AnimationForKey(ANIMATION_NAME_COLOR))
                     _shadowLayer.AddAnimation(_colorAnimation, ANIMATION_NAME_COLOR);
