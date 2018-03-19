@@ -104,7 +104,43 @@ namespace ActivityArc
 
         private void SetupStrokeAnimation()
         {
-            _strokeAnimation = _strokeAnimation ?? CABasicAnimation.FromKeyPath("strokeEnd");
+            if (null == _strokeAnimation)
+            {
+                _strokeAnimation = CABasicAnimation.FromKeyPath("strokeEnd");
+                _strokeAnimation.AnimationStopped += (x, y) =>
+                {
+                    if (_strokeAnimation.RemovedOnCompletion)
+                    {
+                        // Disable animation because the CALayer will attempt to animate
+                        // the stroke from the PREVIOUS StrokeEnd value (not the currently animated value).
+                        CATransaction.DisableActions = true;
+                        _ringLayer.StrokeEnd = this.ProgressValue;
+                        CATransaction.DisableActions = false;
+                    }
+                    else
+                    {
+                        // Reinitialize animation parameters
+                        SetupStrokeAnimation();
+
+                        if (IsIndeterminate)
+                        {
+                            _ringLayer.AddAnimation(_strokeAnimation, ANIMATION_NAME_STROKE);
+                        }
+                        else if (null != _ringLayer.AnimationForKey(ANIMATION_NAME_STROKE))
+                        {
+                            // If the animation is currently running, let's phase it out.
+                            // Ending at the current 'Progress Value'. 
+                            _strokeAnimation.To = NSNumber.FromNFloat(this.ProgressValue);
+                            _strokeAnimation.Duration = _rotationAnimation.Duration * 1.5f;
+                            // ...then have it removed so it no longer recurs.
+                            _strokeAnimation.RemovedOnCompletion = true;
+                            // Queue it up for one final animation...
+                            _ringLayer.AddAnimation(_strokeAnimation, ANIMATION_NAME_STROKE);
+                        }
+                    }
+                };
+            }
+
 
             var presentationLayer = _ringLayer.PresentationLayer as CAShapeLayer ?? _ringLayer;
             if (presentationLayer.StrokeEnd > 0.75f)
@@ -132,7 +168,31 @@ namespace ActivityArc
 
         private void SetupRotationAnimation()
         {
-            _rotationAnimation = _rotationAnimation ?? CABasicAnimation.FromKeyPath("transform.rotation.z");
+            if (null == _rotationAnimation)
+            {
+                _rotationAnimation = CABasicAnimation.FromKeyPath("transform.rotation.z");
+                _rotationAnimation.AnimationStopped += (x, y) =>
+                {
+                    // Reinitialize any animation settings.
+                    SetupRotationAnimation();
+
+                    if (IsIndeterminate)
+                    {
+                        // Re-queue the animation to keep the loop going.
+                        _ringLayer.AddAnimation(_rotationAnimation, ANIMATION_NAME_ROTATION);
+                    }
+                    else if (null != _ringLayer.AnimationForKey(ANIMATION_NAME_ROTATION))
+                    {
+                        // The rotation animation needs to be stopped, we we'll ease it out...
+                        _rotationAnimation.TimingFunction = CAMediaTimingFunction.FromName(CAMediaTimingFunction.EaseOut);
+                        // ...then have it removed so it no longer recurs.
+                        _rotationAnimation.RemovedOnCompletion = true;
+                        // Queue it up for one final rotation...
+                        _ringLayer.AddAnimation(_rotationAnimation, ANIMATION_NAME_ROTATION);
+                    }
+                };
+            }
+
             _rotationAnimation.To = NSNumber.FromFloat((float)Math.PI * 2);
             _rotationAnimation.Duration = 0.78f;
             _rotationAnimation.Cumulative = true;
@@ -148,7 +208,17 @@ namespace ActivityArc
 
         private void SetupColorAnimation()
         {
-            _colorAnimation = _colorAnimation ?? CABasicAnimation.FromKeyPath("strokeColor");
+            if (null == _colorAnimation)
+            {
+                _colorAnimation = CABasicAnimation.FromKeyPath("strokeColor");
+                _colorAnimation.AnimationStopped += (x, y) =>
+                {
+                    if (IsIndeterminate)
+                        _shadowLayer.RemoveAnimation(ANIMATION_NAME_COLOR);
+                    else
+                        _shadowLayer.AddAnimation(_colorAnimation, ANIMATION_NAME_COLOR);
+                };
+            }
 
             _colorAnimation.SetFrom(_shadowLayer.StrokeColor);
 
@@ -195,70 +265,7 @@ namespace ActivityArc
 
             SetupRotationAnimation();
             SetupStrokeAnimation();
-
-            _strokeAnimation.AnimationStopped += (x, y) =>
-            {
-                if (_strokeAnimation.RemovedOnCompletion)
-                {
-                    // Disable animation because the CALayer will attempt to animate
-                    // the stroke from the PREVIOUS StrokeEnd value (not the currently animated value).
-                    CATransaction.DisableActions = true;
-                    _ringLayer.StrokeEnd = this.ProgressValue;
-                    CATransaction.DisableActions = false;
-                }
-                else
-                {
-                    // Reinitialize animation parameters
-                    SetupStrokeAnimation();
-
-                    if (IsIndeterminate)
-                    {
-                        _ringLayer.AddAnimation(_strokeAnimation, ANIMATION_NAME_STROKE);
-                    }
-                    else if (null != _ringLayer.AnimationForKey(ANIMATION_NAME_STROKE))
-                    {
-                        // If the animation is currently running, let's phase it out.
-                        // Ending at the current 'Progress Value'. 
-                        _strokeAnimation.To = NSNumber.FromNFloat(this.ProgressValue);
-                        _strokeAnimation.Duration = _rotationAnimation.Duration * 1.5f;
-                        // ...then have it removed so it no longer recurs.
-                        _strokeAnimation.RemovedOnCompletion = true;
-                        // Queue it up for one final animation...
-                        _ringLayer.AddAnimation(_strokeAnimation, ANIMATION_NAME_STROKE);
-                    }
-                }
-            };
-
-            _rotationAnimation.AnimationStopped += (x, y) =>
-            {
-                // Reinitialize any animation settings.
-                SetupRotationAnimation();
-
-                if (IsIndeterminate)
-                {
-                    // Re-queue the animation to keep the loo going.
-                    _ringLayer.AddAnimation(_rotationAnimation, ANIMATION_NAME_ROTATION);
-                }
-                else if (null != _ringLayer.AnimationForKey(ANIMATION_NAME_ROTATION))
-                {
-                    // The rotation animation needs to be stopped, we we'll ease it out...
-                    _rotationAnimation.TimingFunction = CAMediaTimingFunction.FromName(CAMediaTimingFunction.EaseOut);
-                    // ...then have it removed so it no longer recurs.
-                    _rotationAnimation.RemovedOnCompletion = true;
-                    // Queue it up for one final rotation...
-                    _ringLayer.AddAnimation(_rotationAnimation, ANIMATION_NAME_ROTATION);
-                }
-            };
-
             SetupColorAnimation();
-
-            _colorAnimation.AnimationStopped += (x, y) =>
-            {
-                if (IsIndeterminate)
-                    _shadowLayer.RemoveAnimation(ANIMATION_NAME_COLOR);
-                else
-                    _shadowLayer.AddAnimation(_colorAnimation, ANIMATION_NAME_COLOR);
-            };
         }
 
         public override void LayoutSubviews()
