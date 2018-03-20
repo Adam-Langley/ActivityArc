@@ -36,13 +36,14 @@
                                     <constraint id="203" firstItem="199" firstAttribute="width" constant="142"/>
                                 </constraints>
                             </label>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Progress" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="200" translatesAutoresizingMaskIntoConstraints="NO" misplaced="YES">
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Progress" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="200" translatesAutoresizingMaskIntoConstraints="NO">
                                 <rect key="frame" x="20" y="64" width="73" height="21"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                 <nil key="textColor"/>
                                 <nil key="highlightedColor"/>
                                 <constraints>
                                     <constraint id="209" firstItem="200" firstAttribute="width" constant="73"/>
+                                    <constraint id="705" firstItem="200" firstAttribute="height" constant="21"/>
                                 </constraints>
                             </label>
                             <view contentMode="scaleToFill" id="213" translatesAutoresizingMaskIntoConstraints="NO" customClass="ActivityArc">
@@ -52,12 +53,24 @@
                                     <constraint id="220" firstAttribute="width" secondItem="213" secondAttribute="height" multiplier="1:1"/>
                                 </constraints>
                             </view>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Active" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="699" translatesAutoresizingMaskIntoConstraints="NO">
+                                <rect key="frame" x="20" y="109.5" width="142" height="20.5"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <nil key="textColor"/>
+                                <nil key="highlightedColor"/>
+                                <constraints>
+                                    <constraint id="700" firstItem="699" firstAttribute="width" constant="142"/>
+                                    <constraint id="704" firstItem="699" firstAttribute="width" constant="142"/>
+                                </constraints>
+                            </label>
+                            <switch opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" id="701" translatesAutoresizingMaskIntoConstraints="NO">
+                                <rect key="frame" x="343" y="104" width="51" height="31"/>
+                            </switch>
                         </subviews>
                         <constraints>
                             <constraint id="201" firstItem="199" firstAttribute="top" secondItem="y3c-jy-aDJ" secondAttribute="bottom" constant="5"/>
                             <constraint id="202" firstItem="199" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leadingMargin"/>
                             <constraint id="204" firstItem="197" firstAttribute="top" secondItem="y3c-jy-aDJ" secondAttribute="bottom"/>
-                            <constraint id="205" firstItem="197" firstAttribute="leading" secondItem="199" secondAttribute="trailing" constant="181" relation="lessThanOrEqual"/>
                             <constraint id="206" firstItem="8bC-Xf-vdC" firstAttribute="trailingMargin" secondItem="197" secondAttribute="trailing" constant="2"/>
                             <constraint id="207" firstItem="200" firstAttribute="top" secondItem="199" secondAttribute="bottom" constant="18"/>
                             <constraint id="208" firstItem="200" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leadingMargin"/>
@@ -69,12 +82,18 @@
                             <constraint id="217" firstItem="8bC-Xf-vdC" firstAttribute="trailingMargin" secondItem="213" secondAttribute="trailing" constant="67"/>
                             <constraint id="218" firstItem="213" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leadingMargin" constant="67"/>
                             <constraint id="458" firstItem="8bC-Xf-vdC" firstAttribute="trailingMargin" secondItem="197" secondAttribute="trailing" constant="2"/>
+                            <constraint id="702" firstItem="699" firstAttribute="top" secondItem="200" secondAttribute="bottom" constant="25"/>
+                            <constraint id="703" firstItem="699" firstAttribute="leading" secondItem="200" secondAttribute="leading"/>
+                            <constraint id="3626" firstItem="701" firstAttribute="centerY" secondItem="699" secondAttribute="centerY"/>
+                            <constraint id="3627" firstItem="8bC-Xf-vdC" firstAttribute="trailingMargin" secondItem="701" secondAttribute="trailing" constant="2"/>
+                            <constraint id="3657" firstItem="8bC-Xf-vdC" firstAttribute="trailingMargin" secondItem="197" secondAttribute="trailing" constant="2"/>
                         </constraints>
                     </view>
                     <connections>
                         <outlet property="indeterminateSwitch" destination="197" id="name-outlet-197"/>
                         <outlet property="progressValue" destination="198" id="name-outlet-198"/>
                         <outlet property="activityArc" destination="213" id="name-outlet-213"/>
+                        <outlet property="activeSwitch" destination="701" id="name-outlet-701"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>

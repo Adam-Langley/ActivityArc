@@ -15,6 +15,10 @@ namespace Example
     {
         [Outlet]
         [GeneratedCode ("iOS Designer", "1.0")]
+        UIKit.UISwitch activeSwitch { get; set; }
+
+        [Outlet]
+        [GeneratedCode ("iOS Designer", "1.0")]
         ActivityArc.ActivityArcView activityArc { get; set; }
 
         [Outlet]
@@ -27,6 +31,11 @@ namespace Example
 
         void ReleaseDesignerOutlets ()
         {
+            if (activeSwitch != null) {
+                activeSwitch.Dispose ();
+                activeSwitch = null;
+            }
+
             if (activityArc != null) {
                 activityArc.Dispose ();
                 activityArc = null;

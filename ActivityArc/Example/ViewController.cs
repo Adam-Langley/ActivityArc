@@ -15,15 +15,19 @@ namespace Example
         {
             base.ViewDidLoad();
             // Perform any additional setup after loading the view, typically from a nib.
+            this.activeSwitch.ValueChanged += (x, y) =>
+            {
+                this.activityArc.IsActive = (x as UISwitch).On;
+            };
 
             this.indeterminateSwitch.ValueChanged += (x, y) =>
             {
-                this.activityArc.IsIndeterminate = indeterminateSwitch.On;
+                this.activityArc.IsIndeterminate = (x as UISwitch).On;
             };
 
             this.progressValue.ValueChanged += (x, y) =>
             {
-                this.activityArc.ProgressValue = progressValue.Value;
+                this.activityArc.ProgressValue = (x as UISlider).Value;
             };
         }
 
