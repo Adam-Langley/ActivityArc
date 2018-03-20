@@ -29,6 +29,10 @@ namespace Example
             {
                 this.activityArc.ProgressValue = (x as UISlider).Value;
             };
+
+            this.progressValue.Value = (float)this.activityArc.ProgressValue;
+            this.activeSwitch.On = this.activityArc.IsActive;
+            this.indeterminateSwitch.On = this.activityArc.IsIndeterminate;
         }
 
 

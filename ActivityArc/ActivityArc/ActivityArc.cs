@@ -32,6 +32,7 @@ namespace ActivityArc
         CABasicAnimation _pathOpacityDownAnimation;
 
         bool _isIndeterminate = true;
+        bool _firstLoad = true;
 
         private UIColor _shadowStrokeColor;
         public UIColor ShadowStrokeColor
@@ -48,7 +49,7 @@ namespace ActivityArc
         }
 
 
-        private bool _isActive = true;
+        private bool _isActive = false;
         public bool IsActive
         {
             get
@@ -309,6 +310,10 @@ namespace ActivityArc
             _pathOpacityUpAnimation.FillMode = CAFillMode.Forwards;
             _pathOpacityUpAnimation.TimingFunction = CAMediaTimingFunction.FromName(CAMediaTimingFunction.EaseOut);
             _pathOpacityUpAnimation.RemovedOnCompletion = false;
+            _pathOpacityUpAnimation.AnimationStopped += (x, y) =>
+            {
+                _shadowLayer.Opacity = _arcLayer.Opacity = _pathOpacityUpAnimation.GetToAs<NSNumber>().FloatValue;
+            };
 
             _pathOpacityDownAnimation = CABasicAnimation.FromKeyPath("opacity");
             _pathOpacityDownAnimation.From = NSNumber.FromNFloat(1f);
@@ -317,6 +322,10 @@ namespace ActivityArc
             _pathOpacityDownAnimation.FillMode = CAFillMode.Forwards;
             _pathOpacityDownAnimation.TimingFunction = CAMediaTimingFunction.FromName(CAMediaTimingFunction.EaseIn);
             _pathOpacityDownAnimation.RemovedOnCompletion = false;
+            _pathOpacityDownAnimation.AnimationStopped += (x, y) =>
+            {
+                _shadowLayer.Opacity = _arcLayer.Opacity = _pathOpacityDownAnimation.GetToAs<NSNumber>().FloatValue;
+            };
         }
 
         public override void LayoutSubviews()
@@ -328,8 +337,14 @@ namespace ActivityArc
             // get the minimum bounds
             nfloat minimumPlane = (float)Math.Min(Frame.Width, Frame.Height);
             _textLayer.FontSize = Bounds.Height / 2.75f * 0.75f;
-            _arcLayer.Path = _shadowLayer.Path = CreateArcPath(minimumPlane - _arcLayer.LineWidth);
 
+            if (_firstLoad){
+                CATransaction.DisableActions = true;
+                _shadowLayer.Path = _arcLayer.Path = CreateArcPath(5);
+                _shadowLayer.Opacity = _arcLayer.Opacity = 0f;
+                CATransaction.DisableActions = false;
+            }
+            _firstLoad = false;
             UpdateLayers();
         }
 
@@ -346,18 +361,6 @@ namespace ActivityArc
 
         public void UpdateLayers()
         {
-            UIView step = this;
-            while (null != step)
-            {
-                if (step.Hidden || step.Alpha == 0)
-                {
-                    CATransaction.DisableActions = true;
-                    break;
-                }
-                else
-                    step = step.Superview;
-            }
-
             UIFont textFont = UIFont.SystemFontOfSize(_textLayer.FontSize);
             nfloat minimumPlane = (float)Math.Min(Frame.Width, Frame.Height);
 
@@ -385,6 +388,10 @@ namespace ActivityArc
                     _arcLayer.AddAnimation(_pathGrowAnimation, ANIMATION_GROW);
                     _arcLayer.AddAnimation(_pathOpacityUpAnimation, ANIMATION_OPACITYUP);
                     _shadowLayer.AddAnimation(_pathOpacityUpAnimation, ANIMATION_OPACITYDOWN);
+
+                    _pathOpacityDownAnimation.From = NSNumber.FromFloat(_arcLayer.Opacity);
+                    _pathOpacityDownAnimation.To = NSNumber.FromFloat(1);
+
                 }
 
                 if (IsIndeterminate)
@@ -429,14 +436,14 @@ namespace ActivityArc
                     // shrink arc away
                     _pathShrinkAnimation.SetFrom(_shadowLayer.Path);
                     _pathShrinkAnimation.SetTo(CreateArcPath(5));
+                    _pathOpacityDownAnimation.From = NSNumber.FromFloat(_arcLayer.Opacity);
+                    _pathOpacityDownAnimation.To = NSNumber.FromFloat(0);
                     _shadowLayer.AddAnimation(_pathShrinkAnimation, ANIMATION_SHRINK);
                     _arcLayer.AddAnimation(_pathShrinkAnimation, ANIMATION_SHRINK);
                     _arcLayer.AddAnimation(_pathOpacityDownAnimation, ANIMATION_OPACITYDOWN);
                     _shadowLayer.AddAnimation(_pathOpacityDownAnimation, ANIMATION_OPACITYDOWN);
                 }
             }
-
-            CATransaction.DisableActions = false;
         }
     }
 }
