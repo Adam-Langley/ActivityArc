@@ -26,6 +26,10 @@ namespace ActivityArc
         CABasicAnimation _rotationAnimation;
         CABasicAnimation _strokeAnimation;
         CABasicAnimation _colorAnimation;
+        CABasicAnimation _pathGrowAnimation;
+        CABasicAnimation _pathShrinkAnimation;
+        CABasicAnimation _pathOpacityUpAnimation;
+        CABasicAnimation _pathOpacityDownAnimation;
 
         bool _isIndeterminate = true;
 
@@ -313,21 +317,7 @@ namespace ActivityArc
             _pathOpacityDownAnimation.FillMode = CAFillMode.Forwards;
             _pathOpacityDownAnimation.TimingFunction = CAMediaTimingFunction.FromName(CAMediaTimingFunction.EaseIn);
             _pathOpacityDownAnimation.RemovedOnCompletion = false;
-
-            //_arcOpacityFadeAnimation = CABasicAnimation.FromKeyPath("opacity");
-            //_arcOpacityFadeAnimation.From = NSNumber.FromNFloat(1f);
-            //_arcOpacityFadeAnimation.To = NSNumber.FromNFloat(0f);
-            //_arcOpacityFadeAnimation.Duration = 0.5f;
-            //_arcOpacityFadeAnimation.FillMode = CAFillMode.Forwards;
-            //_arcOpacityFadeAnimation.TimingFunction = CAMediaTimingFunction.FromName(CAMediaTimingFunction.EaseIn);
-            //_arcOpacityFadeAnimation.RemovedOnCompletion = false;
         }
-
-        CABasicAnimation _pathGrowAnimation;
-        CABasicAnimation _pathShrinkAnimation;
-        CABasicAnimation _pathOpacityUpAnimation;
-        CABasicAnimation _pathOpacityDownAnimation;
-        //CABasicAnimation _arcOpacityFadeAnimation;
 
         public override void LayoutSubviews()
         {
@@ -337,14 +327,7 @@ namespace ActivityArc
 
             // get the minimum bounds
             nfloat minimumPlane = (float)Math.Min(Frame.Width, Frame.Height);
-
             _textLayer.FontSize = Bounds.Height / 2.75f * 0.75f;
-
-            //minimumPlane -= _ringLayer.LineWidth;
-            //var boundingRect = new CGRect(Bounds.Width / 2 - minimumPlane / 2, Bounds.Height / 2 - minimumPlane / 2, minimumPlane, minimumPlane);
-            //var path = new UIBezierPath();
-            //path.AddArc(new CGPoint(Bounds.Width / 2, Bounds.Height / 2), minimumPlane / 2, 1.5f * (float)Math.PI, 3.5f * (float)Math.PI, true);
-
             _arcLayer.Path = _shadowLayer.Path = CreateArcPath(minimumPlane - _arcLayer.LineWidth);
 
             UpdateLayers();
@@ -353,7 +336,6 @@ namespace ActivityArc
         private CGPath CreateArcPath(nfloat diameter)
         {
             _textLayer.FontSize = Bounds.Height / 2.75f * 0.75f;
-
 
             var boundingRect = new CGRect(Bounds.Width / 2 - diameter / 2, Bounds.Height / 2 - diameter / 2, diameter, diameter);
             var path = new UIBezierPath();
@@ -396,7 +378,7 @@ namespace ActivityArc
 
                 if (null == _shadowLayer.AnimationForKey(ANIMATION_GROW))
                 {
-                    // animate arc away
+                    // grow arc to full size
                     _pathGrowAnimation.SetFrom(_shadowLayer.Path);
                     _pathGrowAnimation.SetTo(CreateArcPath(minimumPlane));
                     _shadowLayer.AddAnimation(_pathGrowAnimation, ANIMATION_GROW);
@@ -444,7 +426,7 @@ namespace ActivityArc
 
                 if (null == _shadowLayer.AnimationForKey(ANIMATION_SHRINK))
                 {
-                    // animate arc away
+                    // shrink arc away
                     _pathShrinkAnimation.SetFrom(_shadowLayer.Path);
                     _pathShrinkAnimation.SetTo(CreateArcPath(5));
                     _shadowLayer.AddAnimation(_pathShrinkAnimation, ANIMATION_SHRINK);
